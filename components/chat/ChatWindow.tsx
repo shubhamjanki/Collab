@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import Pusher from "pusher-js";
 import { useSession } from "next-auth/react";
-import { Send, User as UserIcon, MessageSquare, Loader2 } from "lucide-react";
+import { Send, User as UserIcon, MessageSquare, Trash2, Video } from "lucide-react";
+import { LiveKitVideoCall } from "./LiveKitVideoCall";
 
 interface Message {
     id: string;
@@ -22,6 +23,9 @@ export default function ChatWindow({ projectId }: ChatWindowProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState("");
     const [isLoading, setIsLoading] = useState(true);
+    const [isCallOpen, setIsCallOpen] = useState(false);
+    const [incomingCall, setIncomingCall] = useState<{ userId: string; userName: string } | null>(null);
+    const [isStartingCall, setIsStartingCall] = useState(false);
     const { data: session } = useSession();
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -29,7 +33,7 @@ export default function ChatWindow({ projectId }: ChatWindowProps) {
         // Initialize Pusher only if keys are provided and not placeholders
         const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
         const cluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
-        const isConfigured = pusherKey && pusherKey !== "your-key" && cluster && cluster !== "mt1";
+        const isConfigured = pusherKey && pusherKey !== "your-key" && cluster;
 
         let channel: any = null;
         let pollInterval: NodeJS.Timeout | null = null;
@@ -46,6 +50,16 @@ export default function ChatWindow({ projectId }: ChatWindowProps) {
                     return [...prev, data];
                 });
                 scrollToBottom();
+            });
+            channel.bind("delete-message", (data: { id: string }) => {
+                setMessages((prev) => prev.filter((m) => m.id !== data.id));
+            });
+            channel.bind("video-call-started", (data: { userId: string; userName: string }) => {
+                if (!data || data.userId === session?.user?.id) return;
+                setIncomingCall({
+                    userId: data.userId,
+                    userName: data.userName || "Team member",
+                });
             });
         } else {
             console.warn("Pusher keys not configured. Falling back to polling.");
@@ -86,7 +100,44 @@ export default function ChatWindow({ projectId }: ChatWindowProps) {
             }
             if (pollInterval) clearInterval(pollInterval);
         };
-    }, [projectId]);
+    }, [projectId, session?.user?.id]);
+
+    useEffect(() => {
+        if (!session?.user || isCallOpen) return;
+
+        let isActive = true;
+        const poll = async () => {
+            try {
+                const response = await fetch(`/api/chat/${projectId}/participants`);
+                if (!response.ok) return;
+                const data = await response.json();
+                if (!isActive) return;
+
+                const participants = Array.isArray(data.participants) ? data.participants : [];
+                const other = participants.find(
+                    (p: { userId: string; userName?: string }) => p.userId !== session.user?.id
+                );
+
+                if (other) {
+                    setIncomingCall({
+                        userId: other.userId,
+                        userName: other.userName || "Team member",
+                    });
+                } else {
+                    setIncomingCall(null);
+                }
+            } catch {
+                // Ignore polling errors; Pusher will still handle real-time updates
+            }
+        };
+
+        poll();
+        const interval = setInterval(poll, 5000);
+        return () => {
+            isActive = false;
+            clearInterval(interval);
+        };
+    }, [projectId, session?.user, isCallOpen]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -113,19 +164,109 @@ export default function ChatWindow({ projectId }: ChatWindowProps) {
         }
     };
 
+    const deleteMessage = async (messageId: string) => {
+        if (!session?.user) return;
+        const confirmed = window.confirm("Delete this message? This cannot be undone.");
+        if (!confirmed) return;
+
+        try {
+            const response = await fetch(`/api/chat/${projectId}?messageId=${messageId}`, {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ messageId }),
+            });
+
+            if (!response.ok) {
+                let errorDetails = "";
+                try {
+                    const data = await response.json();
+                    if (data?.error) errorDetails = `: ${data.error}`;
+                } catch { }
+                console.error(`Failed to delete message (status ${response.status})${errorDetails}`);
+                return;
+            }
+
+            setMessages((prev) => prev.filter((m) => m.id !== messageId));
+        } catch (error) {
+            console.error("Failed to delete message:", error);
+        }
+    };
+
+    const startCall = async () => {
+        if (!session?.user) return;
+        setIsStartingCall(true);
+
+        try {
+            await fetch(`/api/chat/${projectId}/notify-call`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    userId: session.user.id,
+                    userName: session.user.name || "Team member",
+                }),
+            });
+        } catch (error) {
+            console.error("Failed to notify call:", error);
+        } finally {
+            setIsStartingCall(false);
+        }
+
+        setIncomingCall(null);
+        setIsCallOpen(true);
+    };
+
+    const joinCall = () => {
+        setIncomingCall(null);
+        setIsCallOpen(true);
+    };
+
     return (
         <div className="border border-gray-200 rounded-xl bg-white shadow-lg flex flex-col h-[600px] overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white px-6 py-4 flex items-center gap-3">
-                <div className="bg-white/20 p-2 rounded-lg">
-                    <MessageSquare className="h-5 w-5" />
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="bg-white/20 p-2 rounded-lg">
+                        <MessageSquare className="h-5 w-5" />
+                    </div>
+                    <div>
+                        <h3 className="font-bold">Team Workspace Chat</h3>
+                        <p className="text-[10px] text-indigo-100 uppercase tracking-widest font-semibold">Real-time Sync Active</p>
+                    </div>
                 </div>
-                <div>
-                    <h3 className="font-bold">Team Workspace Chat</h3>
-                    <p className="text-[10px] text-indigo-100 uppercase tracking-widest font-semibold">Real-time Sync Active</p>
-                </div>
+                <button
+                    onClick={startCall}
+                    disabled={!session?.user || isStartingCall || isCallOpen}
+                    className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-3 py-2 rounded-lg transition disabled:opacity-50"
+                    title="Start video call"
+                >
+                    <Video className="h-4 w-4" />
+                    {isCallOpen ? "In Call" : isStartingCall ? "Starting..." : "Start Call"}
+                </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/50">
+                {incomingCall && !isCallOpen && (
+                    <div className="flex items-center justify-between gap-3 bg-indigo-50 border border-indigo-200 text-indigo-900 px-4 py-3 rounded-xl">
+                        <div className="text-sm">
+                            <span className="font-semibold">{incomingCall.userName}</span> started a video call.
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={joinCall}
+                                className="bg-indigo-600 text-white text-xs font-semibold px-3 py-2 rounded-lg hover:bg-indigo-700 transition"
+                            >
+                                Join
+                            </button>
+                            <button
+                                onClick={() => setIncomingCall(null)}
+                                className="text-xs font-semibold px-3 py-2 rounded-lg border border-indigo-200 text-indigo-700 hover:bg-indigo-100 transition"
+                            >
+                                Dismiss
+                            </button>
+                        </div>
+                    </div>
+                )}
                 {isLoading ? (
                     <div className="flex items-center justify-center h-full text-gray-500">
                         Loading messages...
@@ -166,6 +307,16 @@ export default function ChatWindow({ projectId }: ChatWindowProps) {
                                             {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
                                     </div>
+                                    {isMe && (
+                                        <button
+                                            onClick={() => deleteMessage(msg.id)}
+                                            className="text-gray-400 hover:text-red-500 transition p-1"
+                                            aria-label="Delete message"
+                                            title="Delete message"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         );
@@ -193,6 +344,15 @@ export default function ChatWindow({ projectId }: ChatWindowProps) {
                     </button>
                 </div>
             </div>
+            {session?.user && (
+                <LiveKitVideoCall
+                    isOpen={isCallOpen}
+                    onClose={() => setIsCallOpen(false)}
+                    projectId={projectId}
+                    userName={session.user.name || "Team member"}
+                    userId={session.user.id}
+                />
+            )}
         </div>
     );
 }

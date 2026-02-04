@@ -27,7 +27,9 @@ export default function ContributionDashboard({ projectId }: ContributionDashboa
         fetch(`/api/projects/${projectId}/contributions`)
             .then((res) => res.json())
             .then((data) => {
-                setContributions(data);
+                // Filter out any contributions with null users
+                const validContributions = data.filter((c: ContributionData) => c && c.user);
+                setContributions(validContributions);
                 setIsLoading(false);
             })
             .catch((error) => {

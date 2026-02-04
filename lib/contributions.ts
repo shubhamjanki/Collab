@@ -88,10 +88,13 @@ export async function getContributionBreakdown(projectId: string) {
         include: { user: true },
     });
 
-    const totalEdits = members.reduce((sum: number, m: any) => sum + m.editsCount, 0);
-    const totalChars = members.reduce((sum: number, m: any) => sum + m.charactersAdded, 0);
+    // Filter out members with null users
+    const validMembers = members.filter(m => m.user);
 
-    return members.map((member: any) => ({
+    const totalEdits = validMembers.reduce((sum: number, m: any) => sum + m.editsCount, 0);
+    const totalChars = validMembers.reduce((sum: number, m: any) => sum + m.charactersAdded, 0);
+
+    return validMembers.map((member: any) => ({
         user: member.user,
         editsCount: member.editsCount,
         charactersAdded: member.charactersAdded,

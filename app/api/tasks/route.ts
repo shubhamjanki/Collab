@@ -115,7 +115,9 @@ export async function POST(req: NextRequest) {
 
         // Trigger Pusher event
         try {
-            await pusherServer.trigger(`project-${projectId}`, "task-created", task);
+            if (pusherServer) {
+                await pusherServer.trigger(`project-${projectId}`, "task-created", task);
+            }
         } catch (pusherError) {
             console.error("[POST /api/tasks] Pusher trigger failed:", pusherError);
         }

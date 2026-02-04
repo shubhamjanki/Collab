@@ -30,6 +30,8 @@ interface TeamMemberListProps {
 }
 
 export function TeamMemberList({ members }: TeamMemberListProps) {
+    const validMembers = members ? members.filter(member => member && member.user) : [];
+
     return (
         <div className="rounded-md border">
             <Table>
@@ -42,7 +44,7 @@ export function TeamMemberList({ members }: TeamMemberListProps) {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {members.map((member) => (
+                    {validMembers.map((member) => (
                         <TableRow key={member.id}>
                             <TableCell className="font-medium">
                                 <div className="flex items-center gap-2">

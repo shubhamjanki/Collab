@@ -75,9 +75,21 @@ export function PendingInvitations() {
             }
 
             toast.success(data.message || `Invitation ${action}ed`);
+            // Remove from list regardless of action
             setInvitations((prev) => prev.filter((inv) => inv.id !== id));
+            
+            // Redirect to project if accepted
+            if (action === "accept" && data.projectId) {
+                setTimeout(() => {
+                    window.location.href = `/projects/${data.projectId}`;
+                }, 1000);
+            }
         } catch (error: any) {
             toast.error(error.message);
+            // Remove from UI anyway if it was already processed
+            if (error.message.includes("already been processed") || error.message.includes("already")) {
+                setInvitations((prev) => prev.filter((inv) => inv.id !== id));
+            }
         } finally {
             setProcessingId(null);
         }

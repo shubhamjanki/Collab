@@ -43,7 +43,13 @@ export async function GET(request: NextRequest) {
         },
     });
 
-    return NextResponse.json(projects);
+    // Filter out members with null users
+    const cleanedProjects = projects.map(project => ({
+        ...project,
+        members: project.members.filter(member => member.user),
+    }));
+
+    return NextResponse.json(cleanedProjects);
 }
 
 import { randomBytes } from "crypto";
@@ -55,7 +61,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, description, isPublic } = await request.json();
+    const { name, description, isPublic, evaluatorId } = await request.json();
 
     if (!name || name.trim().length === 0) {
         return NextResponse.json({ error: "Project name is required" }, { status: 400 });
@@ -91,6 +97,20 @@ export async function POST(request: NextRequest) {
             },
         },
     });
+
+    // Create evaluation record if evaluator is assigned
+    if (evaluatorId) {
+        await prisma.evaluation.create({
+            data: {
+                projectId: project.id,
+                evaluatorId: evaluatorId,
+                scores: {},
+                totalScore: 0,
+                maxScore: 100,
+                status: "DRAFT",
+            },
+        });
+    }
 
     return NextResponse.json(project);
 }

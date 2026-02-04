@@ -10,7 +10,8 @@ import {
     MessageSquare,
     History,
     Info,
-    ChevronDown
+    ChevronDown,
+    AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,13 @@ import {
     TabsTrigger,
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import {
+    Card,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+    CardContent,
+} from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { RubricScoring } from "@/components/faculty/RubricScoring";
 import { toast } from "sonner";

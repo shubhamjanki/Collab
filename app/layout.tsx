@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "@livekit/components-styles";
 import AuthProvider from "@/components/auth-provider";
 
 const geistSans = Geist({

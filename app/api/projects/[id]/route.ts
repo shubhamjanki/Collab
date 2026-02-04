@@ -72,13 +72,20 @@ export async function GET(
             project.inviteCode = inviteCode;
         }
 
+        // Filter out members with null users
+        const cleanedProject = {
+            ...project,
+            members: project.members.filter(member => member.user),
+            documents: project.documents ? project.documents.filter(doc => doc.author) : [],
+        };
+
         // Check if user is a member
-        const isMember = project.members.some((m: any) => m.userId === session.user.id);
+        const isMember = cleanedProject.members.some((m: any) => m.userId === session.user.id);
         if (!isMember && !project.isPublic) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
-        return NextResponse.json(project);
+        return NextResponse.json(cleanedProject);
     } catch (error) {
         console.error("Error fetching project:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

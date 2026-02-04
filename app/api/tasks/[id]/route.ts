@@ -58,7 +58,9 @@ export async function PATCH(
 
         // Trigger Pusher event
         try {
-            await pusherServer.trigger(`project-${task.projectId}`, "task-updated", task);
+            if (pusherServer) {
+                await pusherServer.trigger(`project-${task.projectId}`, "task-updated", task);
+            }
         } catch (pusherError) {
             console.error(`[PATCH /api/tasks/${id}] Pusher trigger failed:`, pusherError);
         }
@@ -93,7 +95,9 @@ export async function DELETE(
 
         // Trigger Pusher event
         try {
-            await pusherServer.trigger(`project-${deletedTask.projectId}`, "task-deleted", { id });
+            if (pusherServer) {
+                await pusherServer.trigger(`project-${deletedTask.projectId}`, "task-deleted", { id });
+            }
         } catch (pusherError) {
             console.error(`[DELETE /api/tasks/${id}] Pusher trigger failed:`, pusherError);
         }

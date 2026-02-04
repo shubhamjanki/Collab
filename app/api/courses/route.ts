@@ -19,6 +19,30 @@ export async function GET(req: NextRequest) {
                         projects: true,
                     },
                 },
+                projects: {
+                    include: {
+                        members: {
+                            include: {
+                                user: {
+                                    select: {
+                                        id: true,
+                                        name: true,
+                                        email: true,
+                                        image: true,
+                                    },
+                                },
+                            },
+                        },
+                        evaluation: {
+                            select: {
+                                id: true,
+                                status: true,
+                                totalScore: true,
+                                maxScore: true,
+                            },
+                        },
+                    },
+                },
             },
             orderBy: {
                 createdAt: "desc",

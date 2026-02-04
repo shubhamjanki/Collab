@@ -40,7 +40,10 @@ export default function ProjectCard({ project }: ProjectCardProps) {
                     <span>{project._count.chat} messages</span>
                 </div>
                 <div className="flex -space-x-2">
-                    {project.members.slice(0, 3).map((member, idx) => (
+                    {project.members
+                        .filter((member) => member.user)
+                        .slice(0, 3)
+                        .map((member, idx) => (
                         <div
                             key={idx}
                             className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-semibold border-2 border-white"
@@ -50,7 +53,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
                     ))}
                     {project.members.length > 3 && (
                         <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center text-xs font-semibold border-2 border-white">
-                            +{project.members.length - 3}
+                            +{project.members.filter(m => m.user).length - 3}
                         </div>
                     )}
                 </div>

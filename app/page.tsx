@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
 
 export default async function Home() {
   const session = await getServerSession(authOptions);
@@ -12,7 +11,7 @@ export default async function Home() {
       <nav className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="text-3xl">🚀</div>
+            <div className="text-3xl">Rocket</div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               CollabHack
             </h1>
@@ -72,7 +71,7 @@ export default async function Home() {
               href={session ? "/dashboard" : "/register"}
               className="px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold text-lg hover:shadow-xl transition-all transform hover:scale-105"
             >
-              {session ? "Enter Workspace →" : "Start Collaborating →"}
+              {session ? "Enter Workspace ->" : "Start Collaborating ->"}
             </Link>
             {!session && (
               <Link
@@ -87,7 +86,7 @@ export default async function Home() {
           {/* Features Grid */}
           <div className="grid md:grid-cols-3 gap-8 mt-20">
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
-              <div className="text-4xl mb-4">📝</div>
+              <div className="text-4xl mb-4">Docs</div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 Real-Time Editing
               </h3>
@@ -97,7 +96,7 @@ export default async function Home() {
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
-              <div className="text-4xl mb-4">💬</div>
+              <div className="text-4xl mb-4">Chat</div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 Team Chat
               </h3>
@@ -107,7 +106,7 @@ export default async function Home() {
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
-              <div className="text-4xl mb-4">📊</div>
+              <div className="text-4xl mb-4">Metrics</div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 Contribution Tracking
               </h3>

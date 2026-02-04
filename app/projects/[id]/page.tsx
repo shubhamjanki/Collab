@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import DocumentEditor from "@/components/editor/DocumentEditor";
 import ChatWindow from "@/components/chat/ChatWindow";
 import ContributionDashboard from "@/components/dashboard/ContributionDashboard";
 import { TeamMemberList } from "@/components/project/TeamMemberList";
 import { InvitationModal } from "@/components/project/InvitationModal";
+import { JoinRequestsManager } from "@/components/project/JoinRequestsManager";
 import { TaskBoard } from "@/components/tasks/TaskBoard";
 import { CreateDocumentModal } from "@/components/project/CreateDocumentModal";
 import { Button } from "@/components/ui/button";
@@ -17,11 +17,11 @@ import { Trash2, Copy, Link as LinkIcon, RefreshCw } from "lucide-react";
 export default function ProjectPage() {
     const params = useParams();
     const projectId = params.id as string;
+    const router = useRouter();
     const { data: session } = useSession();
     const [activeTab, setActiveTab] = useState("documents");
     const [project, setProject] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
 
     const isOwner = project?.members?.some(
         (m: any) => m.userId === session?.user?.id && m.role === "OWNER"
@@ -42,12 +42,6 @@ export default function ProjectPage() {
                 ...prev,
                 documents: prev.documents.filter((d: any) => d.id !== docId),
             }));
-
-            if (activeTab === "documents" && selectedDocId === docId) {
-                // If we deleted the active doc, select the next one or null
-                const remainingDocs = project.documents.filter((d: any) => d.id !== docId);
-                setSelectedDocId(remainingDocs.length > 0 ? remainingDocs[0].id : null);
-            }
 
             toast.success("Document deleted successfully");
         } catch (error: any) {
@@ -74,20 +68,29 @@ export default function ProjectPage() {
         }
     };
 
+    const fetchProject = async () => {
+        try {
+            const res = await fetch(`/api/projects/${projectId}`);
+            const data = await res.json();
+            setProject(data);
+        } catch (error) {
+            console.error("Failed to load project:", error);
+        }
+    };
+
     useEffect(() => {
-        fetch(`/api/projects/${projectId}`)
-            .then((res) => res.json())
-            .then((data) => {
+        const loadProject = async () => {
+            try {
+                const res = await fetch(`/api/projects/${projectId}`);
+                const data = await res.json();
                 setProject(data);
-                if (data.documents && data.documents.length > 0) {
-                    setSelectedDocId(data.documents[0].id);
-                }
                 setIsLoading(false);
-            })
-            .catch((error) => {
+            } catch (error) {
                 console.error("Failed to load project:", error);
                 setIsLoading(false);
-            });
+            }
+        };
+        loadProject();
     }, [projectId]);
 
     if (isLoading) {
@@ -227,11 +230,8 @@ export default function ProjectPage() {
                                     {project.documents.map((doc: any) => (
                                         <div
                                             key={doc.id}
-                                            onClick={() => setSelectedDocId(doc.id)}
-                                            className={`p-4 border rounded-lg cursor-pointer transition relative group ${selectedDocId === doc.id
-                                                ? "border-indigo-600 bg-indigo-50"
-                                                : "border-gray-200 hover:bg-gray-50"
-                                                }`}
+                                            onClick={() => router.push(`/documents/${doc.id}`)}
+                                            className="p-4 border rounded-lg cursor-pointer transition relative group border-gray-200 hover:bg-gray-50"
                                         >
                                             <button
                                                 onClick={(e) => handleDeleteDocument(e, doc.id)}
@@ -245,11 +245,11 @@ export default function ProjectPage() {
                                                 Last updated {new Date(doc.updatedAt).toLocaleDateString()}
                                             </p>
                                             <Button
-                                                variant={selectedDocId === doc.id ? "default" : "outline"}
+                                                variant="outline"
                                                 size="sm"
                                                 className="w-full pointer-events-none"
                                             >
-                                                {selectedDocId === doc.id ? "Editing..." : "Open Document"}
+                                                Open Document
                                             </Button>
                                         </div>
                                     ))}
@@ -261,16 +261,6 @@ export default function ProjectPage() {
                             )}
                         </div>
 
-                        {selectedDocId && (
-                            <DocumentEditor
-                                key={selectedDocId}
-                                documentId={selectedDocId}
-                                initialContent={
-                                    project.documents.find((d: any) => d.id === selectedDocId)?.content ||
-                                    "<p>Start typing here...</p>"
-                                }
-                            />
-                        )}
                     </div>
                 )}
 
@@ -282,7 +272,7 @@ export default function ProjectPage() {
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                             <h3 className="font-semibold mb-4 text-gray-900">Team Members</h3>
                             <div className="space-y-3">
-                                {project.members.map((member: { id: string; user: { name: string | null; }; role: string; }) => (
+                                {project.members && project.members.filter(m => m.user).map((member: { id: string; user: { name: string | null; }; role: string; }) => (
                                     <div key={member.id} className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold text-lg">
                                             {member.user.name?.charAt(0).toUpperCase() || "?"}
@@ -306,6 +296,8 @@ export default function ProjectPage() {
 
                 {activeTab === "team" && (
                     <div className="space-y-6">
+                        {isOwner && <JoinRequestsManager projectId={projectId} onRequestProcessed={fetchProject} />}
+                        
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-xl font-bold text-gray-900">Team Management</h2>

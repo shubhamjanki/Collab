@@ -47,10 +47,10 @@ export function TaskBoard({ projectId, initialTasks = [] }: TaskBoardProps) {
     // Pusher Subscription & Polling Fallback
     useEffect(() => {
         const pusherKey = process.env.NEXT_PUBLIC_PUSHER_KEY;
-        const isConfigured = pusherKey && pusherKey !== "your-key";
+        const isConfigured = pusherKey && pusherKey !== "your-key" && pusherClient;
         let pollInterval: NodeJS.Timeout | null = null;
 
-        if (isConfigured) {
+        if (isConfigured && pusherClient) {
             const channel = pusherClient.subscribe(`project-${projectId}`);
 
             channel.bind("task-created", (newTask: any) => {
@@ -80,7 +80,7 @@ export function TaskBoard({ projectId, initialTasks = [] }: TaskBoardProps) {
         }
 
         return () => {
-            if (isConfigured) pusherClient.unsubscribe(`project-${projectId}`);
+            if (pusherClient) pusherClient.unsubscribe(`project-${projectId}`);
             if (pollInterval) clearInterval(pollInterval);
         };
     }, [projectId]);

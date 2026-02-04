@@ -11,6 +11,7 @@ export default function RegisterPage() {
         email: "",
         password: "",
         confirmPassword: "",
+        role: "STUDENT" as "STUDENT" | "FACULTY" | "ORGANIZER",
     });
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
@@ -43,6 +44,8 @@ export default function RegisterPage() {
             const result = await signIn("credentials", {
                 email: formData.email,
                 password: formData.password,
+                name: formData.name,
+                role: formData.role,
                 redirect: false,
             });
 
@@ -104,6 +107,24 @@ export default function RegisterPage() {
                             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                             placeholder="you@example.com"
                         />
+                    </div>
+
+                    <div>
+                        <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-2">
+                            I am a...
+                        </label>
+                        <select
+                            id="role"
+                            name="role"
+                            value={formData.role}
+                            onChange={(e) => setFormData({ ...formData, role: e.target.value as "STUDENT" | "FACULTY" | "ORGANIZER" })}
+                            required
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition bg-white"
+                        >
+                            <option value="STUDENT">Student</option>
+                            <option value="FACULTY">Faculty/Teacher</option>
+                            <option value="ORGANIZER">Hackathon Organizer</option>
+                        </select>
                     </div>
 
                     <div>

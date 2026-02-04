@@ -11,6 +11,7 @@ model User {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   email         String    @unique
   name          String?
+  password      String?   // For credentials-based authentication
   image         String?
   role          Role      @default(STUDENT)
   skills        String[]  // Array of skills
@@ -103,7 +104,7 @@ model ProjectMember {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   project   Project  @relation(fields: [projectId], references: [id])
   projectId String   @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
   userId    String   @db.ObjectId
   role      MemberRole @default(MEMBER)
   joinedAt  DateTime @default(now())
@@ -129,7 +130,7 @@ model Document {
   content   String?  
   project   Project  @relation(fields: [projectId], references: [id])
   projectId String   @db.ObjectId
-  author    User     @relation(fields: [authorId], references: [id])
+  author    User?    @relation(fields: [authorId], references: [id])
   authorId  String   @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

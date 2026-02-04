@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import ProjectCard from "@/components/dashboard/ProjectCard";
 import QuickActions from "@/components/dashboard/QuickActions";
 import { PendingInvitations } from "@/components/project/PendingInvitations";
+import LogoutButton from "@/components/dashboard/LogoutButton";
 
 export default async function DashboardPage() {
     const session = await getServerSession(authOptions);
@@ -13,7 +14,13 @@ export default async function DashboardPage() {
         redirect("/login");
     }
 
-    const projects = await prisma.project.findMany({
+    // Role-based redirect
+    const userRole = session.user.role;
+    if (userRole === "FACULTY") {
+        redirect("/faculty");
+    }
+
+    const projectsRaw = await prisma.project.findMany({
         where: {
             members: {
                 some: {
@@ -45,6 +52,12 @@ export default async function DashboardPage() {
         take: 10,
     });
 
+    // Filter out members with null users
+    const projects = projectsRaw.map(project => ({
+        ...project,
+        members: project.members.filter(member => member.user),
+    }));
+
     const contributions = await prisma.contributionSnapshot.findMany({
         where: {
             userId: session.user.id,
@@ -64,11 +77,18 @@ export default async function DashboardPage() {
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="container mx-auto px-4 py-8">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                        Welcome back, {session.user.name || "User"}!
-                    </h1>
-                    <p className="text-gray-600">Here's what's happening with your projects</p>
+                <div className="mb-8 flex justify-between items-start">
+                    <div>
+                        <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                            Welcome back, {session.user.name || "User"}!
+                        </h1>
+                        <p className="text-gray-600">
+                            {userRole === "ORGANIZER" 
+                                ? "Manage your hackathon projects and teams" 
+                                : "Here's what's happening with your projects"}
+                        </p>
+                    </div>
+                    <LogoutButton />
                 </div>
 
                 <QuickActions />

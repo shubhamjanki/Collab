@@ -33,19 +33,31 @@ export const authOptions: NextAuthOptions = {
                 });
 
                 if (!user) {
-                    // Create new user (simplified)
+                    // Creating a new user (registration flow)
                     const hashedPassword = await bcrypt.hash(credentials.password, 12);
                     const newUser = await prisma.user.create({
                         data: {
                             email: credentials.email,
-                            name: credentials.email.split("@")[0],
-                            // In real app, you'd handle passwords differently
+                            password: hashedPassword,
+                            name: (credentials as any).name || credentials.email.split("@")[0],
+                            role: (credentials as any).role || "STUDENT",
                         },
                     });
                     return newUser;
                 }
 
-                // For MVP, skip password check initially
+                // Verify password for existing users
+                if (!user.password) {
+                    // User exists but has no password (might be OAuth user)
+                    return null;
+                }
+
+                const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+                
+                if (!isPasswordValid) {
+                    return null;
+                }
+
                 return user;
             },
         }),
@@ -70,6 +82,8 @@ export const authOptions: NextAuthOptions = {
                 session.user.role = token.role as string;
             }
             return session;
-        },
-    },
+        },        async redirect({ url, baseUrl }) {
+            // Role-based redirect after login
+            return url.startsWith(baseUrl) ? url : baseUrl + "/dashboard";
+        },    },
 };
