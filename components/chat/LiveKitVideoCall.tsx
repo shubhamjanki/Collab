@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { X, Pencil } from "lucide-react";
 import { LiveKitRoom, VideoConference, RoomAudioRenderer } from "@livekit/components-react";
 import { toast } from "sonner";
+import { ExcalidrawInVideoCall } from "./ExcalidrawInVideoCall";
 
 interface LiveKitVideoCallProps {
     isOpen: boolean;
@@ -18,6 +19,7 @@ export function LiveKitVideoCall({ isOpen, onClose, projectId, userName, userId 
     const [wsUrl, setWsUrl] = useState<string>("");
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isExcalidrawOpen, setIsExcalidrawOpen] = useState(false);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -73,52 +75,81 @@ export function LiveKitVideoCall({ isOpen, onClose, projectId, userName, userId 
                         <h2 className="text-xl font-semibold text-white">Video Call</h2>
                         <p className="text-sm text-gray-400">Project Room</p>
                     </div>
-                    <button
-                        onClick={handleDisconnect}
-                        className="p-2 hover:bg-gray-800 rounded-full transition"
-                        title="Leave call"
-                    >
-                        <X className="h-6 w-6 text-white" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setIsExcalidrawOpen(!isExcalidrawOpen)}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg transition text-sm font-semibold ${
+                                isExcalidrawOpen 
+                                    ? 'bg-white text-indigo-600 hover:bg-gray-100' 
+                                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                            }`}
+                            title={isExcalidrawOpen ? "Close whiteboard" : "Open whiteboard"}
+                        >
+                            <Pencil className="h-4 w-4" />
+                            {isExcalidrawOpen ? "Close Whiteboard" : "Whiteboard"}
+                        </button>
+                        <button
+                            onClick={handleDisconnect}
+                            className="p-2 hover:bg-gray-800 rounded-full transition"
+                            title="Leave call"
+                        >
+                            <X className="h-6 w-6 text-white" />
+                        </button>
+                    </div>
                 </div>
 
-                {/* Video Conference Area */}
-                <div className="flex-1 overflow-hidden">
-                    {isLoading ? (
-                        <div className="h-full flex items-center justify-center">
-                            <div className="text-center">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4"></div>
-                                <p className="text-white text-lg">Connecting to video call...</p>
-                            </div>
-                        </div>
-                    ) : error ? (
-                        <div className="h-full flex items-center justify-center">
-                            <div className="text-center max-w-md">
-                                <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-6">
-                                    <p className="text-red-200 text-lg font-semibold mb-2">Connection Error</p>
-                                    <p className="text-red-300 text-sm mb-4">{error}</p>
-                                    <button
-                                        onClick={onClose}
-                                        className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition text-white"
-                                    >
-                                        Close
-                                    </button>
+                {/* Video Conference and Whiteboard Area */}
+                <div className="flex-1 overflow-hidden flex gap-2 p-2">
+                    {/* Video Conference Side */}
+                    <div className={`${isExcalidrawOpen ? 'w-1/2' : 'w-full'} transition-all duration-300 overflow-hidden rounded-lg`}>
+                        {isLoading ? (
+                            <div className="h-full flex items-center justify-center bg-gray-800 rounded-lg">
+                                <div className="text-center">
+                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+                                    <p className="text-white text-lg">Connecting to video call...</p>
                                 </div>
                             </div>
+                        ) : error ? (
+                            <div className="h-full flex items-center justify-center bg-gray-800 rounded-lg">
+                                <div className="text-center max-w-md">
+                                    <div className="bg-red-900 bg-opacity-50 border border-red-500 rounded-lg p-6">
+                                        <p className="text-red-200 text-lg font-semibold mb-2">Connection Error</p>
+                                        <p className="text-red-300 text-sm mb-4">{error}</p>
+                                        <button
+                                            onClick={onClose}
+                                            className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition text-white"
+                                        >
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : token && wsUrl ? (
+                            <LiveKitRoom
+                                token={token}
+                                serverUrl={wsUrl}
+                                connect={true}
+                                onDisconnected={handleDisconnect}
+                                data-lk-theme="default"
+                                style={{ height: "100%", borderRadius: "0.5rem", overflow: "hidden" }}
+                            >
+                                <VideoConference />
+                                <RoomAudioRenderer />
+                            </LiveKitRoom>
+                        ) : null}
+                    </div>
+
+                    {/* Whiteboard Side */}
+                    {isExcalidrawOpen && (
+                        <div className="w-1/2 transition-all duration-300">
+                            <ExcalidrawInVideoCall
+                                isVisible={isExcalidrawOpen}
+                                onClose={() => setIsExcalidrawOpen(false)}
+                                projectId={projectId}
+                                userName={userName}
+                            />
                         </div>
-                    ) : token && wsUrl ? (
-                        <LiveKitRoom
-                            token={token}
-                            serverUrl={wsUrl}
-                            connect={true}
-                            onDisconnected={handleDisconnect}
-                            data-lk-theme="default"
-                            style={{ height: "100%" }}
-                        >
-                            <VideoConference />
-                            <RoomAudioRenderer />
-                        </LiveKitRoom>
-                    ) : null}
+                    )}
                 </div>
             </div>
         </div>

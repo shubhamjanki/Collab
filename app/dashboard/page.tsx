@@ -83,8 +83,8 @@ export default async function DashboardPage() {
                             Welcome back, {session.user.name || "User"}!
                         </h1>
                         <p className="text-gray-600">
-                            {userRole === "ORGANIZER" 
-                                ? "Manage your hackathon projects and teams" 
+                            {userRole === "ORGANIZER"
+                                ? "Manage your hackathon projects and teams"
                                 : "Here's what's happening with your projects"}
                         </p>
                     </div>

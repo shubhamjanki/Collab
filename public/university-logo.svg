@@ -1,0 +1,18 @@
+<svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shield shape -->
+  <path d="M40 5 L70 15 L70 35 Q70 55 40 75 Q10 55 10 35 L10 15 Z" fill="#1e3a8a" stroke="#1e40af" stroke-width="2"/>
+  
+  <!-- Book icon -->
+  <rect x="30" y="25" width="20" height="25" fill="#ffffff" rx="1"/>
+  <line x1="40" y1="25" x2="40" y2="50" stroke="#1e3a8a" stroke-width="1.5"/>
+  <line x1="30" y1="32" x2="50" y2="32" stroke="#1e3a8a" stroke-width="0.5"/>
+  <line x1="30" y1="37" x2="50" y2="37" stroke="#1e3a8a" stroke-width="0.5"/>
+  <line x1="30" y1="42" x2="50" y2="42" stroke="#1e3a8a" stroke-width="0.5"/>
+  
+  <!-- Laurel wreath bottom -->
+  <path d="M25 55 Q25 52 27 50 Q29 52 29 55" stroke="#fbbf24" fill="none" stroke-width="1.5"/>
+  <path d="M55 55 Q55 52 53 50 Q51 52 51 55" stroke="#fbbf24" fill="none" stroke-width="1.5"/>
+  
+  <!-- Star on top -->
+  <path d="M40 15 L42 20 L47 20 L43 23 L45 28 L40 25 L35 28 L37 23 L33 20 L38 20 Z" fill="#fbbf24"/>
+</svg>

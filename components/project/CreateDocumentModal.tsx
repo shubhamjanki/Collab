@@ -25,6 +25,7 @@ interface CreateDocumentModalProps {
 export function CreateDocumentModal({ projectId, onDocumentCreated }: CreateDocumentModalProps) {
     const [open, setOpen] = useState(false)
     const [title, setTitle] = useState("")
+    const [googleDocUrl, setGoogleDocUrl] = useState("")
     const [isLoading, setIsLoading] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -41,6 +42,7 @@ export function CreateDocumentModal({ projectId, onDocumentCreated }: CreateDocu
                 body: JSON.stringify({
                     projectId,
                     title,
+                    googleDocUrl: googleDocUrl.trim() || undefined,
                 }),
             })
 
@@ -53,6 +55,7 @@ export function CreateDocumentModal({ projectId, onDocumentCreated }: CreateDocu
             onDocumentCreated(newDoc)
             setOpen(false)
             setTitle("")
+            setGoogleDocUrl("")
         } catch (error) {
             console.error(error)
             toast.error("An error occurred while creating the document")
@@ -74,7 +77,7 @@ export function CreateDocumentModal({ projectId, onDocumentCreated }: CreateDocu
                     <DialogHeader>
                         <DialogTitle>Create Document</DialogTitle>
                         <DialogDescription>
-                            Enter a title for your new document.
+                            Enter a title and e Doc link.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
@@ -91,7 +94,20 @@ export function CreateDocumentModal({ projectId, onDocumentCreated }: CreateDocu
                                 autoFocus
                             />
                         </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="googleDocUrl" className="text-right text-xs">
+                                Google Doc URL
+                            </Label>
+                            <Input
+                                id="googleDocUrl"
+                                value={googleDocUrl}
+                                onChange={(e) => setGoogleDocUrl(e.target.value)}
+                                placeholder="https://docs.google.com/..."
+                                className="col-span-3"
+                            />
+                        </div>
                     </div>
+                    create a new document in google docs and share the public link
                     <DialogFooter>
                         <Button
                             type="button"

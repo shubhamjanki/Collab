@@ -221,7 +221,6 @@ export default function ProjectPage() {
                                             ...prev,
                                             documents: [doc, ...(prev.documents || [])],
                                         }));
-                                        setSelectedDocId(doc.id);
                                     }}
                                 />
                             </div>
@@ -272,7 +271,7 @@ export default function ProjectPage() {
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                             <h3 className="font-semibold mb-4 text-gray-900">Team Members</h3>
                             <div className="space-y-3">
-                                {project.members && project.members.filter(m => m.user).map((member: { id: string; user: { name: string | null; }; role: string; }) => (
+                                {project.members && project.members.filter((m: any) => m.user).map((member: { id: string; user: { name: string | null; }; role: string; }) => (
                                     <div key={member.id} className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold text-lg">
                                             {member.user.name?.charAt(0).toUpperCase() || "?"}
@@ -297,7 +296,7 @@ export default function ProjectPage() {
                 {activeTab === "team" && (
                     <div className="space-y-6">
                         {isOwner && <JoinRequestsManager projectId={projectId} onRequestProcessed={fetchProject} />}
-                        
+
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-xl font-bold text-gray-900">Team Management</h2>

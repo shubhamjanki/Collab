@@ -33,4 +33,22 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Google Docs Integration
+
+To enable document syncing and Word-to-Google Doc conversion, you need a Google Cloud Service Account:
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a new project or select an existing one.
+3. Enable the **Google Drive API**.
+4. Create a **Service Account** under "IAM & Admin > Service Accounts".
+5. Generate a **JSON Key** for the service account and download it.
+6. Add the following to your `.env` file:
+   ```env
+   GOOGLE_CLIENT_EMAIL="your-service-account@project-id.iam.gserviceaccount.com"
+   GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+   ```
+   *Note: Ensure the private key is a single line with `\n` characters for newlines (exactly as it appears in the JSON key file but as a single string).*
+
+7. **Permissions**: For syncing existing docs, share the Google Doc with the service account email. For the Word upload feature, the service account handles permissions automatically.
+

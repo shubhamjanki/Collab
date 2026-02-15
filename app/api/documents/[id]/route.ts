@@ -79,43 +79,48 @@ export async function PATCH(
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { content } = await request.json();
+        const { content, googleDocUrl } = await request.json();
 
-        if (content === undefined) {
-            return NextResponse.json({ error: "Content is required" }, { status: 400 });
+        if (content === undefined && googleDocUrl === undefined) {
+            return NextResponse.json({ error: "Content or googleDocUrl is required" }, { status: 400 });
         }
 
         // Update document
         const document = await prisma.document.update({
             where: { id },
             data: {
-                content,
+                ...(content !== undefined && { content }),
+                ...(googleDocUrl !== undefined && { googleDocUrl }),
                 updatedAt: new Date(),
             },
         });
 
-        // Save revision (Background-ish)
-        try {
-            await prisma.documentRevision.create({
-                data: {
-                    documentId: id,
-                    content,
-                    userId: session.user.id,
-                },
-            });
-        } catch (revError) {
-            console.error("Revision tracking failed:", revError);
+        // Save revision only if content changed
+        if (content !== undefined) {
+            try {
+                await prisma.documentRevision.create({
+                    data: {
+                        documentId: id,
+                        content,
+                        userId: session.user.id,
+                    },
+                });
+            } catch (revError) {
+                console.error("Revision tracking failed:", revError);
+            }
         }
 
         // Notify real-time subscribers via Pusher if configured
         if (process.env.PUSHER_APP_ID && process.env.PUSHER_APP_ID !== "your-app-id") {
             try {
                 const { pusherServer } = await import("@/lib/pusher");
-                await pusherServer.trigger(`document-${id}`, "updated", {
-                    userId: session.user.id,
-                    content,
-                    timestamp: new Date(),
-                });
+                if (pusherServer) {
+                    await pusherServer.trigger(`document-${id}`, "updated", {
+                        userId: session.user.id,
+                        content,
+                        timestamp: new Date(),
+                    });
+                }
             } catch (pusherError) {
                 console.error("Pusher update failed:", pusherError);
             }
@@ -222,11 +227,13 @@ export async function PUT(
         if (process.env.PUSHER_APP_ID && process.env.PUSHER_APP_ID !== "your-app-id") {
             try {
                 const { pusherServer } = await import("@/lib/pusher");
-                await pusherServer.trigger(`document-${id}`, "updated", {
-                    userId: session.user.id,
-                    content,
-                    timestamp: new Date(),
-                });
+                if (pusherServer) {
+                    await pusherServer.trigger(`document-${id}`, "updated", {
+                        userId: session.user.id,
+                        content,
+                        timestamp: new Date(),
+                    });
+                }
             } catch (pusherError) {
                 console.error("Pusher update failed:", pusherError);
             }

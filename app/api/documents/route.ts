@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { projectId, title, content } = body;
+        const { projectId, title, content, googleDocUrl } = body;
 
         if (!projectId || !title) {
             return NextResponse.json(
@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
                 title,
                 content: content || "",
                 authorId: session.user.id,
+                googleDocUrl,
             },
         });
 

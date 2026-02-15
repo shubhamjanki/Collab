@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import Pusher from "pusher-js";
 import { useSession } from "next-auth/react";
-import { Send, User as UserIcon, MessageSquare, Trash2, Video } from "lucide-react";
+import { Send, User as UserIcon, MessageSquare, Trash2, Video, Pencil } from "lucide-react";
 import { LiveKitVideoCall } from "./LiveKitVideoCall";
+import { ExcalidrawModal } from "./ExcalidrawModal";
 
 interface Message {
     id: string;
@@ -26,6 +27,7 @@ export default function ChatWindow({ projectId }: ChatWindowProps) {
     const [isCallOpen, setIsCallOpen] = useState(false);
     const [incomingCall, setIncomingCall] = useState<{ userId: string; userName: string } | null>(null);
     const [isStartingCall, setIsStartingCall] = useState(false);
+    const [isExcalidrawOpen, setIsExcalidrawOpen] = useState(false);
     const { data: session } = useSession();
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -234,15 +236,26 @@ export default function ChatWindow({ projectId }: ChatWindowProps) {
                         <p className="text-[10px] text-indigo-100 uppercase tracking-widest font-semibold">Real-time Sync Active</p>
                     </div>
                 </div>
-                <button
-                    onClick={startCall}
-                    disabled={!session?.user || isStartingCall || isCallOpen}
-                    className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-3 py-2 rounded-lg transition disabled:opacity-50"
-                    title="Start video call"
-                >
-                    <Video className="h-4 w-4" />
-                    {isCallOpen ? "In Call" : isStartingCall ? "Starting..." : "Start Call"}
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setIsExcalidrawOpen(true)}
+                        disabled={!session?.user}
+                        className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-3 py-2 rounded-lg transition disabled:opacity-50"
+                        title="Open whiteboard"
+                    >
+                        <Pencil className="h-4 w-4" />
+                        Whiteboard
+                    </button>
+                    <button
+                        onClick={startCall}
+                        disabled={!session?.user || isStartingCall || isCallOpen}
+                        className="flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold px-3 py-2 rounded-lg transition disabled:opacity-50"
+                        title="Start video call"
+                    >
+                        <Video className="h-4 w-4" />
+                        {isCallOpen ? "In Call" : isStartingCall ? "Starting..." : "Start Call"}
+                    </button>
+                </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50/50">
@@ -345,13 +358,21 @@ export default function ChatWindow({ projectId }: ChatWindowProps) {
                 </div>
             </div>
             {session?.user && (
-                <LiveKitVideoCall
-                    isOpen={isCallOpen}
-                    onClose={() => setIsCallOpen(false)}
-                    projectId={projectId}
-                    userName={session.user.name || "Team member"}
-                    userId={session.user.id}
-                />
+                <>
+                    <LiveKitVideoCall
+                        isOpen={isCallOpen}
+                        onClose={() => setIsCallOpen(false)}
+                        projectId={projectId}
+                        userName={session.user.name || "Team member"}
+                        userId={session.user.id}
+                    />
+                    <ExcalidrawModal
+                        isOpen={isExcalidrawOpen}
+                        onClose={() => setIsExcalidrawOpen(false)}
+                        projectId={projectId}
+                        userName={session.user.name || "Team member"}
+                    />
+                </>
             )}
         </div>
     );
