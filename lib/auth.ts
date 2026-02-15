@@ -62,11 +62,10 @@ export const authOptions: NextAuthOptions = {
             },
         }),
 
-        // Optional OAuth (add later)
-        // GoogleProvider({
-        //   clientId: process.env.GOOGLE_CLIENT_ID!,
-        //   clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        // }),
+        GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID!,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        }),
     ],
     callbacks: {
         async jwt({ token, user }) {

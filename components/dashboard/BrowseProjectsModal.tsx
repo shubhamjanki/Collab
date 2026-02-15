@@ -16,6 +16,7 @@ export function BrowseProjectsModal({ isOpen, onClose }: BrowseProjectsModalProp
     const [isLoading, setIsLoading] = useState(false);
     const [filter, setFilter] = useState("");
     const [requestingJoin, setRequestingJoin] = useState<string | null>(null);
+    const [requestedProjects, setRequestedProjects] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         if (isOpen) {
@@ -58,12 +59,14 @@ export function BrowseProjectsModal({ isOpen, onClose }: BrowseProjectsModalProp
                 method: "POST",
             });
 
+            const data = await response.json();
             if (response.ok) {
                 toast.success("Join request sent! Wait for admin approval.");
-                // Optionally refresh the projects list
-                fetchProjects();
+                setRequestedProjects(prev => new Set(prev).add(projectId));
+            } else if (response.status === 400 && data.error?.includes("pending")) {
+                toast.info("You already have a pending request for this project.");
+                setRequestedProjects(prev => new Set(prev).add(projectId));
             } else {
-                const data = await response.json();
                 toast.error(data.error || "Failed to send join request");
             }
         } catch (error) {
@@ -214,10 +217,18 @@ export function BrowseProjectsModal({ isOpen, onClose }: BrowseProjectsModalProp
                                         <div className="grid grid-cols-2 gap-2">
                                             <button
                                                 onClick={() => handleRequestJoin(project.id)}
-                                                disabled={requestingJoin === project.id}
-                                                className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                                disabled={requestingJoin === project.id || requestedProjects.has(project.id)}
+                                                className={`px-4 py-2 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed ${
+                                                    requestedProjects.has(project.id)
+                                                        ? "bg-gray-400 text-white"
+                                                        : "bg-green-600 text-white hover:bg-green-700"
+                                                }`}
                                             >
-                                                {requestingJoin === project.id ? "Sending..." : "Request to Join"}
+                                                {requestingJoin === project.id
+                                                    ? "Sending..."
+                                                    : requestedProjects.has(project.id)
+                                                    ? "Requested"
+                                                    : "Request to Join"}
                                             </button>
                                             <button
                                                 onClick={() => handleViewProject(project.id)}

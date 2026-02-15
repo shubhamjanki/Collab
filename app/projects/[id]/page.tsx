@@ -12,7 +12,7 @@ import { TaskBoard } from "@/components/tasks/TaskBoard";
 import { CreateDocumentModal } from "@/components/project/CreateDocumentModal";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Trash2, Copy, Link as LinkIcon, RefreshCw } from "lucide-react";
+import { Trash2, Copy, Link as LinkIcon, RefreshCw, LogOut } from "lucide-react";
 
 export default function ProjectPage() {
     const params = useParams();
@@ -26,6 +26,25 @@ export default function ProjectPage() {
     const isOwner = project?.members?.some(
         (m: any) => m.userId === session?.user?.id && m.role === "OWNER"
     );
+    const isMember = project?.members?.some(
+        (m: any) => m.userId === session?.user?.id
+    );
+
+    const handleLeaveProject = async () => {
+        if (!confirm("Are you sure you want to leave this project?")) return;
+
+        try {
+            const res = await fetch(`/api/projects/${projectId}/leave`, { method: "POST" });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || "Failed to leave project");
+            }
+            toast.success("You have left the project.");
+            router.push("/dashboard");
+        } catch (error: any) {
+            toast.error(error.message);
+        }
+    };
 
     const handleDeleteDocument = async (e: React.MouseEvent, docId: string) => {
         e.stopPropagation();
@@ -155,6 +174,17 @@ export default function ProjectPage() {
                         )}
                         <div className="flex gap-2">
                             <InvitationModal projectId={projectId} />
+                            {isMember && !isOwner && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                                    onClick={handleLeaveProject}
+                                >
+                                    <LogOut className="h-4 w-4" />
+                                    Leave Project
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </div>
